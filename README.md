@@ -96,9 +96,213 @@ If you get stuck, check out my `railway.md` for more tips, or reach out!
 - **Smart Inventory Management**: Automatically update your pantry/inventory from grocery bills (PostgreSQL-backed).
 - **AI-Powered Recipe Suggestions**: Get creative, healthy dish ideas based on your available ingredients (Gemini-powered).
 - **Nutrition Tracker**: Log foods, extract nutrition facts via Gemini, and view your nutrition scoreboard (calories, protein, carbs, fat) — all data stored in PostgreSQL.
-- **WhatsApp Integration**: Designed for seamless use with Puch AI’s WhatsApp bot.
+- **WhatsApp Integration**: Designed for seamless use with Puch AI's WhatsApp bot.
 - **Bearer Token Authentication**: Secure, Puch-compatible authentication.
 - **PostgreSQL Database**: All user data is stored in a PostgreSQL database for reliability and scalability.
+- **🆕 REST API Server**: FastAPI-based REST API server exposing all features as HTTP endpoints (port 8005).
+
+---
+
+## 🔌 REST API Server
+
+In addition to the MCP server (port 8086), this project now includes a **FastAPI REST API server** (port 8005) that exposes all nutrition tracking features as HTTP endpoints.
+
+### Starting the API Server
+
+```bash
+# Activate virtual environment
+source .venv/bin/activate
+
+# Run the API server
+python api/main.py
+```
+
+The API server will start on `http://0.0.0.0:8005` with:
+- **📝 Interactive API Docs**: http://localhost:8005/docs (Swagger UI)
+- **📖 Alternative Docs**: http://localhost:8005/redoc (ReDoc)
+- **💚 Health Check**: http://localhost:8005/health
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `GET /health` | GET | Health check endpoint |
+| `POST /nutrition` | POST | Get nutrition info for food using Gemini AI |
+| `POST /nutrition/board` | POST | Get user's cumulative nutrition totals |
+| `POST /recipes/suggest` | POST | Get 3 dish suggestions from ingredients |
+| `POST /nutrition/lock` | POST | Log a custom dish with nutrition data |
+| `POST /ocr/grocery-bill` | POST | Extract items from grocery bill image (OCR) |
+
+### Example API Usage
+
+#### 1. Health Check
+```bash
+curl http://localhost:8005/health
+```
+
+Response:
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-01-26T12:00:00",
+  "service": "Nutrition Tracker API"
+}
+```
+
+#### 2. Get Nutrition Information
+```bash
+curl -X POST http://localhost:8005/nutrition \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user123",
+    "food": "chicken breast",
+    "amount": 200
+  }'
+```
+
+Response:
+```json
+{
+  "calories": 330,
+  "protein": 62,
+  "carbs": 0,
+  "fat": 7
+}
+```
+
+#### 3. Get Nutrition Board (User Totals)
+```bash
+curl -X POST http://localhost:8005/nutrition/board \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user123"
+  }'
+```
+
+Response:
+```json
+{
+  "user_id": "user123",
+  "calories": 1850.5,
+  "protein": 120.3,
+  "carbs": 180.2,
+  "fat": 65.8
+}
+```
+
+#### 4. Suggest Dishes from Ingredients
+```bash
+curl -X POST http://localhost:8005/recipes/suggest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ingredients": ["eggs", "spinach", "cheese"]
+  }'
+```
+
+Response:
+```json
+{
+  "dishes": [
+    "Spinach and Cheese Omelette (2 eggs, 100g spinach, 50g cheese)",
+    "Cheesy Spinach Scrambled Eggs (3 eggs, 80g spinach, 40g cheese)",
+    "Spinach Frittata with Cheese (4 eggs, 120g spinach, 60g cheese)"
+  ]
+}
+```
+
+#### 5. Lock a Dish (Log Custom Nutrition)
+```bash
+curl -X POST http://localhost:8005/nutrition/lock \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user123",
+    "dish": "Spinach Omelette",
+    "nutrition": {
+      "calories": 250,
+      "protein": 18,
+      "carbs": 5,
+      "fat": 15
+    }
+  }'
+```
+
+Response:
+```json
+{
+  "timestamp": "2026-01-26T12:30:00",
+  "user_id": "user123",
+  "food": "Spinach Omelette",
+  "amount": 1,
+  "nutrition": {
+    "calories": 250,
+    "protein": 18,
+    "carbs": 5,
+    "fat": 15
+  }
+}
+```
+
+#### 6. Scan Grocery Bill (OCR)
+```bash
+# First, encode your image to base64
+IMAGE_BASE64=$(base64 -w 0 grocery_bill.jpg)
+
+curl -X POST http://localhost:8005/ocr/grocery-bill \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"user_id\": \"user123\",
+    \"image_base64\": \"$IMAGE_BASE64\"
+  }"
+```
+
+Response:
+```json
+{
+  "items": [
+    "Banana",
+    "Milk",
+    "Bread",
+    "Eggs",
+    "Chicken Breast"
+  ]
+}
+```
+
+### Testing the API
+
+A test script is provided for quick testing:
+
+```bash
+# Make sure the API server is running first
+./test_api.sh
+```
+
+This will test all endpoints and display the results.
+
+### Running Both Servers
+
+You can run both the MCP server (port 8086) and the API server (port 8005) simultaneously:
+
+```bash
+# Terminal 1: Start MCP server
+source .venv/bin/activate
+python mcp-bearer-token/mcp_starter.py
+
+# Terminal 2: Start API server
+source .venv/bin/activate
+python api/main.py
+```
+
+Both servers share the same PostgreSQL database and business logic.
+
+### API Authentication
+
+The REST API currently has **no authentication** (open API). This is suitable for:
+- Development and testing
+- Internal/private networks
+- Trusted environments
+
+For production use, consider adding authentication (API keys, JWT tokens, etc.).
 
 ---
 

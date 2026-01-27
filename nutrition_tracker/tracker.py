@@ -1,7 +1,8 @@
 import os
 import json
 from typing import Optional, Dict, List, Any
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,7 +12,8 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
     raise RuntimeError("GEMINI_API_KEY not set in environment.")
 
-genai.configure(api_key=GEMINI_API_KEY)
+# Initialize the new SDK client
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 PROMPT_TEMPLATE = (
     "Give me the nutrition facts for {amount} {food}. "
@@ -24,10 +26,12 @@ import re
 
 def get_nutrition_from_gemini(food: str, amount: float) -> Optional[Dict[str, float]]:
     prompt = PROMPT_TEMPLATE.format(food=food, amount=amount)
-    model = genai.GenerativeModel("gemini-1.5-flash")
     text = None
     try:
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
         text = response.text.strip()
         # Remove code block markers and leading 'json'
         text = text.lstrip("` \n")
@@ -135,10 +139,12 @@ def suggest_dishes_from_gemini(ingredients: List[str]) -> Optional[List[str]]:
         f"{', '.join(ingredients)}. "
         "Return a JSON array of 3 dish names (strings). Do not include any text or explanation, only the JSON array."
     )
-    model = genai.GenerativeModel("gemini-1.5-flash")
     text = None
     try:
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
         text = response.text.strip()
         text = text.lstrip("` \n")
         if text.lower().startswith("json"):
