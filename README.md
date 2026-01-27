@@ -90,6 +90,79 @@ If you get stuck, check out my `railway.md` for more tips, or reach out!
 
 ---
 
+## Architecture
+
+```mermaid
+graph TB
+    %% User Interfaces
+    WA[📱 WhatsApp User] 
+    WEB[🌐 Web App<br/><i>Coming Soon</i>]
+    MOB[📱 Mobile App<br/><i>Future</i>]
+    
+    %% Middleware Layer
+    PUCH[🤖 Puch AI Agent<br/>Message Router]
+    
+    %% Backend Services
+    MCP[🔧 MCP Server<br/>FastMCP + Bearer Auth]
+    API[🔌 REST API<br/><i>Future</i>]
+    
+    %% Core Tools
+    subgraph "🛠️ MCP Tools"
+        OCR[📄 Grocery Bill OCR<br/>Azure Vision]
+        NUT[🥗 Nutrition Tracker<br/>Gemini AI]
+        REC[👨‍🍳 Recipe Suggestions<br/>Gemini AI]
+        INV[📦 Inventory Manager]
+        VAL[✅ Validation Tool]
+    end
+    
+    %% External APIs
+    subgraph "🌍 External APIs"
+        AZURE[☁️ Azure AI Vision<br/>OCR Service]
+        GEMINI[🧠 Google Gemini<br/>LLM for Nutrition & Recipes]
+    end
+    
+    %% Database
+    DB[(🗄️ PostgreSQL Database<br/>Users, Nutrition, Inventory)]
+    
+    %% Connections
+    WA --> PUCH
+    WEB -.-> API
+    MOB -.-> API
+    
+    PUCH --> MCP
+    API -.-> MCP
+    
+    MCP --> OCR
+    MCP --> NUT
+    MCP --> REC
+    MCP --> INV
+    MCP --> VAL
+    
+    OCR --> AZURE
+    NUT --> GEMINI
+    REC --> GEMINI
+    
+    NUT --> DB
+    INV --> DB
+    VAL --> DB
+    
+    %% Dark Theme Styling
+    classDef future fill:#2a2a2a,stroke:#888,stroke-width:2px,color:#ccc,stroke-dasharray: 5 5
+    classDef external fill:#1a365d,stroke:#4299e1,stroke-width:2px,color:#90cdf4
+    classDef core fill:#2d3748,stroke:#805ad5,stroke-width:2px,color:#d6bcfa
+    classDef data fill:#1a202c,stroke:#68d391,stroke-width:2px,color:#9ae6b4
+    classDef user fill:#2c5282,stroke:#63b3ed,stroke-width:2px,color:#bee3f8
+    classDef middleware fill:#744210,stroke:#f6ad55,stroke-width:2px,color:#fbd38d
+    
+    class WEB,MOB,API future
+    class AZURE,GEMINI external
+    class MCP,OCR,NUT,REC,INV,VAL core
+    class DB data
+    class WA user
+    class PUCH middleware
+```
+---
+
 ## Features
 
 - **Grocery Bill OCR**: Scan grocery bills (image upload) and extract purchased items using Azure AI Vision OCR. Inventory is persistent per user in PostgreSQL.
@@ -305,8 +378,3 @@ The REST API currently has **no authentication** (open API). This is suitable fo
 For production use, consider adding authentication (API keys, JWT tokens, etc.).
 
 ---
-
-## Architecture
-
-```mermaid
-... (rest of the file unchanged) ...
